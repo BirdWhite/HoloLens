@@ -6,7 +6,10 @@ using UnityEngine;
 public class PovController : MonoBehaviour
 {
     // Start is called before the first frame update
-    public bool isfixed = false;
+    public bool isFixed = false;
+    public Vector3 originPos;
+    public Quaternion originQuat;
+
     void Start()
     {
         
@@ -20,14 +23,16 @@ public class PovController : MonoBehaviour
 
     public void Togglefix()
     {
-        isfixed = !isfixed;
+        isFixed = !isFixed;
+        originPos = transform.position;
+        originQuat = transform.rotation;
     }
     public void FixPov()
     {
-        if (isfixed)
+        if (isFixed)
         {
-
+            transform.position = originPos;
+            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, originQuat.eulerAngles.y, transform.rotation.eulerAngles.z);
         }
     }
-
 }
