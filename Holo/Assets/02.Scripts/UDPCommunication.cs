@@ -12,6 +12,8 @@ using Windows.Networking.Connectivity;
 using Windows.Networking;
 #else
 using System.Net.Sockets;
+using System.Net;
+using System.Net.NetworkInformation;
 #endif
 
 [System.Serializable]
@@ -127,9 +129,50 @@ public class UDPCommunication : Singleton<UDPCommunication>
 
 #else
     // to make Unity-Editor happy :-)
+
+    UdpClient srv;
+    IPEndPoint endPt;
+
     void Start()
     {
-        cM.UnityLog("On UnityEditor");
+        
+        try
+        {
+            srv = new UdpClient();
+            endPt = new IPEndPoint(IPAddress.Parse(externalIP), int.Parse(internalPort));
+            cM.UnityLog("Unity Editor On " + GetLocalIPAddress());
+        }
+        catch (SocketException e)
+        {
+            Debug.LogException(e);
+        }
+    }
+
+    public void Send(string msg = "receive from Unity")
+    {
+        byte[] data = System.Text.Encoding.UTF8.GetBytes(msg);
+        srv.Send(data, data.Length, endPt);
+        Debug.Log("[Send] " + endPt.ToString() + "로 " + data.Length + " 바이트 송신");
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (srv != null)
+            srv.Close();
+        srv = null;
+    }
+
+    public string GetLocalIPAddress()
+    {
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                return ip.ToString();
+            }
+        }
+        throw new System.Exception("No network adapters with an IPv4 address in the system!");
     }
 
     public void SendUDPMessage(string HostIP, string HostPort, byte[] data)

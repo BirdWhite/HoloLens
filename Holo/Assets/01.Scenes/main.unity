@@ -334,7 +334,7 @@ GameObject:
   - component: {fileID: 735308633}
   - component: {fileID: 735308632}
   m_Layer: 0
-  m_Name: Server
+  m_Name: UDP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
