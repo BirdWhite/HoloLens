@@ -47,6 +47,11 @@ public class UDPCommunication : Singleton<UDPCommunication>
     private readonly Queue<Action> ExecuteOnMainThread = new Queue<Action>();
 
 
+    public Transform[] targers;
+    public Vector3[] targetPos = new Vector3[10];
+    public Quaternion[] targetRot = new Quaternion[10]; 
+
+
 #if !UNITY_EDITOR
 
     //we've got a message (data[]) from (host) in case of not assigned an event
@@ -93,7 +98,7 @@ public class UDPCommunication : Singleton<UDPCommunication>
                     hn.IPInformation?.NetworkAdapter != null && hn.IPInformation.NetworkAdapter.NetworkAdapterId
                     == icp.NetworkAdapter.NetworkAdapterId);
             Debug.Log(IP.ToString());
-            cM.UnityLog(IP.ToString());
+            cM.UnityLog("HoloLens2 On "+IP.ToString());
             await socket.BindEndpointAsync(IP, internalPort);
         }
         catch (Exception e)
@@ -205,8 +210,12 @@ public class UDPCommunication : Singleton<UDPCommunication>
         while (ExecuteOnMainThread.Count > 0)
         {
             ExecuteOnMainThread.Dequeue().Invoke();
-
         }
+    }
+
+    private void LateUpdate()
+    {
+        SendTargetsTransform();
     }
 
 #if !UNITY_EDITOR
@@ -235,4 +244,42 @@ public class UDPCommunication : Singleton<UDPCommunication>
 
 
 #endif
+
+    public void SendTargetsTransform()
+    {
+        int i = 0;
+        string result = "";
+        foreach(Vector3 pos in targetPos)
+        {
+            result += Vec3ToStr(pos) + "&" + QuatToStr(targetRot[i]) + "&";
+            i++;
+        }
+        result = result.Substring(0, result.Length - 1);
+        Send(result);
+        Debug.Log(result);
+    }
+
+    public string Vec3ToStr(Vector3 pos)
+    {
+        return pos.x.ToString("0.000") + "," + pos.y.ToString("0.000") + "," + pos.z.ToString("0.000");
+    }
+
+    public string QuatToStr(Quaternion quat)
+    {
+        return quat.x.ToString("0.000") + "," + quat.y.ToString("0.000") + "," + quat.z.ToString("0.000") + "," + quat.w.ToString("0.000");
+    }
+
+    public Vector3 StrToVec3(string str)
+    {
+        string[] spl = str.Split(',');
+        Vector3 pos = new Vector3(float.Parse(spl[0]), float.Parse(spl[1]), float.Parse(spl[2]));
+        return pos;
+    }
+
+    public Quaternion StrToQuat(string str)
+    {
+        string[] spl = str.Split(',');
+        Quaternion quat = new Quaternion(float.Parse(spl[0]), float.Parse(spl[1]), float.Parse(spl[2]), float.Parse(spl[3]));
+        return quat;
+    }
 }
