@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.Events;
+using System.Runtime.CompilerServices;
 
 #if !UNITY_EDITOR
 using Windows.Networking.Sockets;
@@ -34,7 +35,7 @@ public class UDPCommunication : Singleton<UDPCommunication>
     public string externalPort = "50931";
 
     [Tooltip("Send a message at Startup")]
-    public bool sendPingAtStart = true;
+    public bool sendPingAtStart = false;
 
     [Tooltip("Conten of Ping")]
     public string PingMessage = "hello";
@@ -46,10 +47,7 @@ public class UDPCommunication : Singleton<UDPCommunication>
 
     private readonly Queue<Action> ExecuteOnMainThread = new Queue<Action>();
 
-
-    public Transform[] targers;
-    public Vector3[] targetPos = new Vector3[10];
-    public Quaternion[] targetRot = new Quaternion[10]; 
+    public Transform[] targets;
 
 
 #if !UNITY_EDITOR
@@ -59,6 +57,7 @@ public class UDPCommunication : Singleton<UDPCommunication>
     {
         Debug.Log("GOT MESSAGE FROM: " + host + " on port " + port + " " + data.Length.ToString() + " bytes ");
         cM.UnityLog("GOT MESSAGE FROM: " + host + " on port " + port + " " + data.Length.ToString() + " bytes ");
+        ReceiveTartgetsTransforrm(data);
     }
 
     //Send an UDP-Packet
@@ -98,7 +97,7 @@ public class UDPCommunication : Singleton<UDPCommunication>
                     hn.IPInformation?.NetworkAdapter != null && hn.IPInformation.NetworkAdapter.NetworkAdapterId
                     == icp.NetworkAdapter.NetworkAdapterId);
             Debug.Log(IP.ToString());
-            cM.UnityLog("HoloLens2 On "+IP.ToString());
+            cM.UnityLog("HoloLens2 On " + IP.ToString());
             await socket.BindEndpointAsync(IP, internalPort);
         }
         catch (Exception e)
@@ -185,6 +184,25 @@ public class UDPCommunication : Singleton<UDPCommunication>
 
     }
 
+    private void FixedUpdate()
+    {
+        SendTargetsTransform();
+    }
+
+    public void SendTargetsTransform()
+    {
+        int i = 0;
+        string result = "";
+        foreach (Transform trans in targets)
+        {
+            result += Vec3ToStr(trans.position) + "&" + QuatToStr(trans.rotation) + "%";
+            i++;
+        }
+        result = result.Substring(0, result.Length - 1);
+        Send(result);
+        Debug.Log(result);
+    }
+
 #endif
 
 
@@ -213,10 +231,7 @@ public class UDPCommunication : Singleton<UDPCommunication>
         }
     }
 
-    private void LateUpdate()
-    {
-        SendTargetsTransform();
-    }
+
 
 #if !UNITY_EDITOR
     private void Socket_MessageReceived(Windows.Networking.Sockets.DatagramSocket sender,
@@ -245,18 +260,42 @@ public class UDPCommunication : Singleton<UDPCommunication>
 
 #endif
 
-    public void SendTargetsTransform()
+    public void ReceiveTartgetsTransforrm(byte[] data)
     {
+        string[] transtr = Encoding.UTF8.GetString(data).Split('%');
+        Debug.Log(Encoding.UTF8.GetString(data));
         int i = 0;
-        string result = "";
-        foreach(Vector3 pos in targetPos)
+        foreach(Transform trans in targets)
         {
-            result += Vec3ToStr(pos) + "&" + QuatToStr(targetRot[i]) + "&";
+            trans.position = StrToVec3(transtr[i].Split('&')[0]);
+            trans.rotation = StrToQuat(transtr[i].Split('&')[1]);
             i++;
         }
-        result = result.Substring(0, result.Length - 1);
-        Send(result);
-        Debug.Log(result);
+    }
+
+    public bool CompareTransform(Transform a, Transform b)
+    {
+        if(a.position.Equals(b.position) || a.rotation.Equals(b.rotation))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    public bool CompareTransArray(Transform[] a, Transform[] b)
+    {
+        if (a.Length != b.Length)
+            return false;
+
+        for(int i = 0; i < a.Length; i++)
+        {
+            if (!CompareTransform(a[i], b[i]))
+                return false;
+        }
+
+        return true;
     }
 
     public string Vec3ToStr(Vector3 pos)

@@ -353,9 +353,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   internalPort: 50930
-  externalIP: 192.168.112.1
+  externalIP: 192.168.50.145
   externalPort: 50931
-  sendPingAtStart: 1
+  sendPingAtStart: 0
   PingMessage: hello
   udpEvent:
     m_PersistentCalls:
@@ -373,6 +373,8 @@ MonoBehaviour:
           m_BoolArgument: 0
         m_CallState: 2
   cM: {fileID: 747119031}
+  targets:
+  - {fileID: 782120449}
 --- !u!4 &735308633
 Transform:
   m_ObjectHideFlags: 0
@@ -524,7 +526,7 @@ Transform:
   m_GameObject: {fileID: 782120448}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.5, y: 0, z: 0.5}
-  m_LocalScale: {x: 0.10000003, y: 0.20000006, z: 0.1}
+  m_LocalScale: {x: 0.10000003, y: 0.2, z: 0.1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 6
